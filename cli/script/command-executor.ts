@@ -1463,6 +1463,7 @@ export const runReactNativeBundleCommand = (
     entryFile,
     "--platform",
     platform,
+    "--reset-cache"
   ]);
 
   if (sourcemapOutput) {
