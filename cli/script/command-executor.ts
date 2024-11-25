@@ -38,17 +38,8 @@ import {
   Session,
   UpdateMetrics,
 } from "../script/types";
-import {
-  getAndroidHermesEnabled,
-  getiOSHermesEnabled,
-  runHermesEmitBinaryCommand,
-  isValidVersion
-} from "./react-native-utils";
-import {
-  fileDoesNotExistOrIsDirectory,
-  isBinaryOrZip,
-  fileExists
-} from "./utils/file-utils";
+import { getAndroidHermesEnabled, getiOSHermesEnabled, runHermesEmitBinaryCommand, isValidVersion } from "./react-native-utils";
+import { fileDoesNotExistOrIsDirectory, isBinaryOrZip, fileExists } from "./utils/file-utils";
 
 const configFilePath: string = path.join(process.env.LOCALAPPDATA || process.env.HOME, ".code-push.config");
 const emailValidator = require("email-validator");
@@ -1081,11 +1072,7 @@ function getAppVersionFromXcodeProject(command: cli.IReleaseReactCommand, projec
   }
 
   const xcodeProj = xcode.project(resolvedPbxprojFile).parseSync();
-  const marketingVersion = xcodeProj.getBuildProperty(
-    "MARKETING_VERSION",
-    command.buildConfigurationName,
-    command.xcodeTargetName
-  );
+  const marketingVersion = xcodeProj.getBuildProperty("MARKETING_VERSION", command.buildConfigurationName, command.xcodeTargetName);
   if (!isValidVersion(marketingVersion)) {
     throw new Error(
       `The "MARKETING_VERSION" key in the "${resolvedPbxprojFile}" file needs to specify a valid semver string, containing both a major and minor version (e.g. 1.3.2, 1.1).`
@@ -1326,8 +1313,8 @@ export const releaseReact = (command: cli.IReleaseReactCommand): Promise<void> =
           ? Q(command.appStoreVersion)
           : getReactNativeProjectAppVersion(command, projectName);
 
-        if (command.outputDir) {
-          command.sourcemapOutput = path.join(command.outputDir, bundleName + ".map");
+        if (command.sourcemapOutput && !command.sourcemapOutput.endsWith(".map")) {
+          command.sourcemapOutput = path.join(command.sourcemapOutput, bundleName + ".map");
         }
 
         return appVersionPromise;
@@ -1353,9 +1340,9 @@ export const releaseReact = (command: cli.IReleaseReactCommand): Promise<void> =
       )
       .then(async () => {
         const isHermesEnabled =
-        command.useHermes ||
-        (platform === "android" && (await getAndroidHermesEnabled(command.gradleFile))) || // Check if we have to run hermes to compile JS to Byte Code if Hermes is enabled in build.gradle and we're releasing an Android build
-        (platform === "ios" && (await getiOSHermesEnabled(command.podFile))); // Check if we have to run hermes to compile JS to Byte Code if Hermes is enabled in Podfile and we're releasing an iOS build
+          command.useHermes ||
+          (platform === "android" && (await getAndroidHermesEnabled(command.gradleFile))) || // Check if we have to run hermes to compile JS to Byte Code if Hermes is enabled in build.gradle and we're releasing an Android build
+          (platform === "ios" && (await getiOSHermesEnabled(command.podFile))); // Check if we have to run hermes to compile JS to Byte Code if Hermes is enabled in Podfile and we're releasing an iOS build
 
         if (isHermesEnabled) {
           log(chalk.cyan("\nRunning hermes compiler...\n"));
@@ -1463,7 +1450,7 @@ export const runReactNativeBundleCommand = (
     entryFile,
     "--platform",
     platform,
-    "--reset-cache"
+    "--reset-cache",
   ]);
 
   if (sourcemapOutput) {
